@@ -1,1 +1,151 @@
-[]
+[
+    {
+        "id": "ca3b21c224c4037d",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "0fb59eece1d6201d",
+        "type": "websocket-listener",
+        "path": "/pirs",
+        "wholemsg": "false"
+    },
+    {
+        "id": "9358cea9b6c8100c",
+        "type": "tcp in",
+        "z": "ca3b21c224c4037d",
+        "name": "",
+        "server": "server",
+        "host": "",
+        "port": "5000",
+        "datamode": "stream",
+        "datatype": "buffer",
+        "newline": "",
+        "topic": "",
+        "trim": false,
+        "base64": false,
+        "tls": "",
+        "x": 120,
+        "y": 80,
+        "wires": [
+            [
+                "5b3adf45b0b743d1",
+                "89c8094ff16068fc"
+            ]
+        ]
+    },
+    {
+        "id": "5b3adf45b0b743d1",
+        "type": "switch",
+        "z": "ca3b21c224c4037d",
+        "name": "",
+        "property": "payload.length",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "12",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 270,
+        "y": 80,
+        "wires": [
+            [
+                "08c6b1f6a7faeb6d"
+            ]
+        ]
+    },
+    {
+        "id": "08c6b1f6a7faeb6d",
+        "type": "function",
+        "z": "ca3b21c224c4037d",
+        "name": "decode",
+        "func": "\nfunction decodePIRVols(encodedData, len) {\n\n\n    // check for invalid len\n    if (len !== 12) {\n        console.log(`Decode Error: invalid packet length: ${len}`);\n        return null;\n    }\n    let sum = 0;\n\n    // check for invalid checksum\n    for (let i = 0; i <= 10; i++) {\n        sum += encodedData[i];\n    }\n\n    const bytesum = sum & 0xFF; // equivalent to __uint8_t\n    if (bytesum !== encodedData[11]) {\n        console.log(`Decode Error: invalid checksum, received bytesum: ${bytesum}`);\n        return null;\n    }\n\n    const index = encodedData[0];\n    const pir_vol0 = (encodedData[1] << 8) + encodedData[2];\n    const pir_vol1 = (encodedData[3] << 8) + encodedData[4];\n    const pir_vol2 = (encodedData[5] << 8) + encodedData[6];\n    const pir_vol3 = (encodedData[7] << 8) + encodedData[8];\n    const pir_vol4 = (encodedData[9] << 8) + encodedData[10];\n\n    return {\n        index: index,\n        pirVols: [pir_vol0, pir_vol1, pir_vol2, pir_vol3, pir_vol4]\n    };\n}\n\n\n/*\n    ********* MAIN PROCESS ********\n*/\n\nmsg.payload = decodePIRVols(msg.payload, 12);\n\nconsole.log(msg.payload.pirVols)\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 420,
+        "y": 80,
+        "wires": [
+            [
+                "1e18f472e8751856"
+            ]
+        ]
+    },
+    {
+        "id": "89c8094ff16068fc",
+        "type": "switch",
+        "z": "ca3b21c224c4037d",
+        "name": "",
+        "property": "payload.length",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "neq",
+                "v": "12",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 270,
+        "y": 140,
+        "wires": [
+            [
+                "6b9a23d1973dcca8"
+            ]
+        ]
+    },
+    {
+        "id": "6b9a23d1973dcca8",
+        "type": "debug",
+        "z": "ca3b21c224c4037d",
+        "name": "error packet",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 430,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "987c29c66c19d4f3",
+        "type": "websocket in",
+        "z": "ca3b21c224c4037d",
+        "name": "",
+        "server": "0fb59eece1d6201d",
+        "client": "",
+        "x": 120,
+        "y": 260,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "1e18f472e8751856",
+        "type": "websocket out",
+        "z": "ca3b21c224c4037d",
+        "name": "",
+        "server": "0fb59eece1d6201d",
+        "client": "",
+        "x": 640,
+        "y": 260,
+        "wires": []
+    }
+]
